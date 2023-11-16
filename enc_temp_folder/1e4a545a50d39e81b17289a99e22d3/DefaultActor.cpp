@@ -44,7 +44,7 @@ bool ADefaultActor::CheckAABBCollision(const ADefaultActor* OtherActor) const
 	FVector AABBMax = GetActorLocation() + AABBHalfExtents;
 
 	// compare the vectors to each other / check if the actors in question are colliding with each other.
-	// this might get kind of heavy with a lot of actors
+	// this must 
 	bool OverlapsX = AABBMin.X <= OtherAABBMax.X && AABBMax.X >= OtherAABBMin.X;
 	bool OverlapsY = AABBMin.Y <= OtherAABBMax.Y && AABBMax.Y >= OtherAABBMin.Y;
 	bool OverlapsZ = AABBMin.Z <= OtherAABBMax.Z && AABBMax.Z >= OtherAABBMin.Z;

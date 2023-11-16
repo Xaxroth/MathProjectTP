@@ -43,9 +43,34 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interpolation")
 	void Interpolate(float DeltaTime, bool ExitAtFullCharge);
 
+	void AxisAlignedBoundingBox();
+
+	bool CheckAABBCollision(const ADefaultActor* OtherActor) const;
+
+	UPROPERTY(EditAnywhere)
+	FVector AABBHalfExtents;
+
+	void HandleAABBCollision(ADefaultActor* OtherActor);
+
+	void GroundCheck();
+
 	void GetOtherActors();
 
 	bool Interpolating = true;
+
+	bool Falling = false;
+
+	bool Grounded = false;
+
+	FVector LastKnownPosition;
+
+	FVector NewPosition;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground Check")
+	float LandingThreshhold = 1000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground Check")
+	bool CheckForGround = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Radius")
 	float DetectionRadiusSize = 100.0f;
