@@ -23,6 +23,9 @@ public:
 	int YSize = 0;
 	UPROPERTY(EditAnywhere, Meta = (ClampMin = 0.01))
 	int Scale = 0;
+	UPROPERTY(EditAnywhere, Meta = (ClampMin = 0.01))
+	float NoiseScale = 0.1f;
+
 
 	UPROPERTY(EditAnywhere, Meta = (MakeEditWidget = true))
 	UProceduralMeshComponent* ProceduralMesh;

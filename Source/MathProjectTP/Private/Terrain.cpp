@@ -37,7 +37,7 @@ void ATerrain::CreateVertices()
 	{
 		for (int y = 0; y <= YSize; y++)
 		{
-			float z = FMath::PerlinNoise2D(FVector2D(x + 0.1, y + 0.1)) * PerlinNoiseMultiplier;
+			float z = FMath::PerlinNoise2D(FVector2D(x * NoiseScale + 0.1, y * NoiseScale + 0.1)) * PerlinNoiseMultiplier;
 			Vertices.Add(FVector(x * Scale, y * Scale, z));
 			UV0.Add(FVector2D(x * Scale, y * Scale));
 		}

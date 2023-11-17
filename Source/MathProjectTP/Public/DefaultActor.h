@@ -45,6 +45,8 @@ public:
 
 	void AxisAlignedBoundingBox();
 
+	void CheckDirection(ADefaultActor* OtherActor);
+
 	bool CheckAABBCollision(const ADefaultActor* OtherActor) const;
 
 	UPROPERTY(EditAnywhere)

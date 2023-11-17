@@ -56,7 +56,13 @@ void ADefaultActor::HandleAABBCollision(ADefaultActor* OtherActor)
 {
 	if (CheckAABBCollision(OtherActor))
 	{
+		FString DebugMessage = FString::Printf(TEXT("Another Actor Found"));
+		float TimeToDisplay = 5.0f;
+		FColor DebugTextColor = FColor::Green;
 
+		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
+
+		CheckDirection(OtherActor);
 	}
 }
 
@@ -127,6 +133,50 @@ void ADefaultActor::GetOtherActors() {
 			}
 			// Here I can compare default actors to each other. For example, if a projectile actor collides with an enemy
 		}
+	}
+}
+
+void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
+{
+	FVector DirectionToOtherActor = (OtherActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	FVector ForwardVector = GetActorForwardVector();
+
+	FVector CrossProduct = FVector::CrossProduct(DirectionToOtherActor, ForwardVector);
+	// Check and compare both vector angles
+	float DotProduct = FVector::DotProduct(DirectionToOtherActor, ForwardVector);
+
+	// Check the sign of the dot product to determine relative direction
+	if (DotProduct > 0)
+	{
+		// In front
+		FString DebugMessage = FString::Printf(TEXT("Actor In Front"));
+		float TimeToDisplay = 5.0f;
+		FColor DebugTextColor = FColor::Yellow;
+		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
+	}
+	else if (DotProduct < 0)
+	{
+		// Behind
+		FString DebugMessage = FString::Printf(TEXT("Actor Behind"));
+		float TimeToDisplay = 5.0f;
+		FColor DebugTextColor = FColor::Yellow;
+		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
+	}
+	else if (CrossProduct.Z > 0) 
+	{
+		// Right
+		FString DebugMessage = FString::Printf(TEXT("Actor To The Right"));
+		float TimeToDisplay = 5.0f;
+		FColor DebugTextColor = FColor::Yellow;
+		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
+	}
+	else if (CrossProduct.Z < 0) 
+	{
+		// Left
+		FString DebugMessage = FString::Printf(TEXT("Actor To The Left"));
+		float TimeToDisplay = 5.0f;
+		FColor DebugTextColor = FColor::Yellow;
+		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
 	}
 }
 
