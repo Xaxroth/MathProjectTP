@@ -34,6 +34,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sphere", meta = (AllowPrivateAccess = "true"))
 	USphereComponent* DetectionRadius;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* Ball;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sphere", meta = (AllowPrivateAccess = "true"))
+	UMeshComponent* StaticMeshComponent;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enums")
 	TEnumAsByte<MovementState> MovementState;
 
@@ -67,6 +73,9 @@ public:
 	FVector LastKnownPosition;
 
 	FVector NewPosition;
+
+	FVector AABBMin;
+	FVector AABBMax;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground Check")
 	float LandingThreshhold = 1000.0f;

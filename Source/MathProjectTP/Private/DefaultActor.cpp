@@ -6,12 +6,16 @@ ADefaultActor::ADefaultActor()
 
 	DetectionRadius = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionRadius"));
 	DetectionRadius->SetSphereRadius(DetectionRadiusSize);
+
+	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
+	StaticMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
+	RootComponent = StaticMeshComponent;
 }
 
 void ADefaultActor::BeginPlay()
 {
 	Super::BeginPlay();
-
+	StaticMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 	DetectionRadius->SetSphereRadius(DetectionRadiusSize);
 }
 
@@ -31,8 +35,10 @@ void ADefaultActor::Interpolate(float DeltaTime, bool ExitAtFullCharge)
 
 void ADefaultActor::AxisAlignedBoundingBox() 
 {
-	FVector AABBMin = GetActorLocation() - AABBHalfExtents;
-	FVector AABBMax = GetActorLocation() + AABBHalfExtents;
+	AABBMin = GetActorLocation() - AABBHalfExtents;
+	AABBMax = GetActorLocation() + AABBHalfExtents;
+
+	DrawDebugBox(GetWorld(), GetActorLocation(), AABBHalfExtents, FColor::Green, false, 0, 0, 5);
 }
 
 bool ADefaultActor::CheckAABBCollision(const ADefaultActor* OtherActor) const
@@ -40,8 +46,8 @@ bool ADefaultActor::CheckAABBCollision(const ADefaultActor* OtherActor) const
 	FVector OtherAABBMin = OtherActor->GetActorLocation() - OtherActor->AABBHalfExtents;
 	FVector OtherAABBMax = OtherActor->GetActorLocation() + OtherActor->AABBHalfExtents;
 
-	FVector AABBMin = GetActorLocation() - AABBHalfExtents;
-	FVector AABBMax = GetActorLocation() + AABBHalfExtents;
+	FVector AABBMinTemp = GetActorLocation() - AABBHalfExtents;
+	FVector AABBMaxTemp = GetActorLocation() + AABBHalfExtents;
 
 	// compare the vectors to each other / check if the actors in question are colliding with each other.
 	// this might get kind of heavy with a lot of actors
@@ -54,14 +60,14 @@ bool ADefaultActor::CheckAABBCollision(const ADefaultActor* OtherActor) const
 
 void ADefaultActor::HandleAABBCollision(ADefaultActor* OtherActor)
 {
-	if (CheckAABBCollision(OtherActor))
-	{
 		FString DebugMessage = FString::Printf(TEXT("Another Actor Found"));
 		float TimeToDisplay = 5.0f;
 		FColor DebugTextColor = FColor::Green;
 
 		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
 
+	if (CheckAABBCollision(OtherActor))
+	{
 		CheckDirection(OtherActor);
 	}
 }
@@ -108,33 +114,28 @@ void ADefaultActor::GroundCheck()
 	else 
 	{
 		Falling = false;
-		FString DebugMessage = FString::Printf(TEXT("ITHATS A BUGf"));
-		float TimeToDisplay = 5.0f;
-		FColor DebugTextColor = FColor::Green;
-
-		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
 	}
 
 	Grounded = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
 }
 
-void ADefaultActor::GetOtherActors() {
-	TArray<AActor*> OverlappingActors;
-	DetectionRadius->GetOverlappingActors(OverlappingActors);
-
-	for (AActor* OverlappingActor : OverlappingActors)
-	{
-		ADefaultActor* DefaultActor = Cast<ADefaultActor>(OverlappingActor);
-		if (DefaultActor)
-		{
-			if (DefaultActor->ActorType == ActorType::Projectile && ActorType == ActorType::Enemy) 
-			{
-				// Enemy takes damage from projectile, call on relevant takedamage function here
-			}
-			// Here I can compare default actors to each other. For example, if a projectile actor collides with an enemy
-		}
-	}
-}
+// REPLACED BY AABB
+//void ADefaultActor::GetOtherActors() {
+//	TArray<AActor*> OverlappingActors;
+//
+//	for (AActor* OverlappingActor : OverlappingActors)
+//	{
+//		ADefaultActor* DefaultActor = Cast<ADefaultActor>(OverlappingActor);
+//		if (DefaultActor)
+//		{
+//			if (DefaultActor->ActorType == ActorType::Projectile && ActorType == ActorType::Enemy) 
+//			{
+//				// Enemy takes damage from projectile, call on relevant takedamage function here
+//			}
+//			// Here I can compare default actors to each other. For example, if a projectile actor collides with an enemy
+//		}
+//	}
+//}
 
 void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
 {
@@ -162,7 +163,8 @@ void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
 		FColor DebugTextColor = FColor::Yellow;
 		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
 	}
-	else if (CrossProduct.Z > 0) 
+
+	if (CrossProduct.Z > 0) 
 	{
 		// Right
 		FString DebugMessage = FString::Printf(TEXT("Actor To The Right"));
@@ -184,21 +186,31 @@ void ADefaultActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	GetOtherActors();
-	GroundCheck();
-	AxisAlignedBoundingBox();
-	
+	StaticMeshComponent->SetWorldScale3D(FVector(0.5f, 0.5f, 0.5f)); // If I don't do this the scale is always 0 in play mode for some reason.
 	TArray<AActor*> OverlappingActors;
 	GetOverlappingActors(OverlappingActors, ADefaultActor::StaticClass());
 
 	for (AActor* OverlappingActor : OverlappingActors)
 	{
+				FString DebugMessage = FString::Printf(TEXT("Actor Behind"));
+				float TimeToDisplay = 5.0f;
+				FColor DebugTextColor = FColor::Yellow;
+				GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
 		ADefaultActor* OtherActor = Cast<ADefaultActor>(OverlappingActor);
 		if (OtherActor)
 		{
-			CheckAABBCollision(OtherActor);
+			// Check for AABB collision
+			if (CheckAABBCollision(OtherActor))
+			{
+				// Collision occurred, perform actions
+				HandleAABBCollision(OtherActor);
+			}
 		}
 	}
+
+	AxisAlignedBoundingBox();
+
+	GroundCheck();
 
 	switch (MovementState) {
 	case MovementState::Interpolate:

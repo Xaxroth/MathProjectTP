@@ -26,6 +26,10 @@ public:
 	UPROPERTY(EditAnywhere, Meta = (ClampMin = 0.01))
 	float NoiseScale = 0.1f;
 
+	float RandomGeneratedNumber = 0.1f;
+	float MinValue = 0.1f;
+	float MaxValue = 0.5f;
+
 
 	UPROPERTY(EditAnywhere, Meta = (MakeEditWidget = true))
 	UProceduralMeshComponent* ProceduralMesh;
