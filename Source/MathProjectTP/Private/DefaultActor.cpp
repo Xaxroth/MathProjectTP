@@ -35,8 +35,8 @@ void ADefaultActor::Interpolate(float DeltaTime, bool ExitAtFullCharge)
 
 void ADefaultActor::AxisAlignedBoundingBox() 
 {
-	AABBMin = GetActorLocation() - AABBHalfExtents;
-	AABBMax = GetActorLocation() + AABBHalfExtents;
+	//AABBMin = GetActorLocation() - AABBHalfExtents;
+	//AABBMax = GetActorLocation() + AABBHalfExtents;
 
 	DrawDebugBox(GetWorld(), GetActorLocation(), AABBHalfExtents, FColor::Green, false, 0, 0, 5);
 }
@@ -118,24 +118,6 @@ void ADefaultActor::GroundCheck()
 
 	Grounded = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
 }
-
-// REPLACED BY AABB
-//void ADefaultActor::GetOtherActors() {
-//	TArray<AActor*> OverlappingActors;
-//
-//	for (AActor* OverlappingActor : OverlappingActors)
-//	{
-//		ADefaultActor* DefaultActor = Cast<ADefaultActor>(OverlappingActor);
-//		if (DefaultActor)
-//		{
-//			if (DefaultActor->ActorType == ActorType::Projectile && ActorType == ActorType::Enemy) 
-//			{
-//				// Enemy takes damage from projectile, call on relevant takedamage function here
-//			}
-//			// Here I can compare default actors to each other. For example, if a projectile actor collides with an enemy
-//		}
-//	}
-//}
 
 void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
 {
