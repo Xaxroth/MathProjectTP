@@ -1,11 +1,9 @@
 #include "DefaultActor.h"
+#include "MathProjectTP/MathProjectTPGameMode.h"
 
 ADefaultActor::ADefaultActor()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
-	DetectionRadius = CreateDefaultSubobject<USphereComponent>(TEXT("DetectionRadius"));
-	DetectionRadius->SetSphereRadius(DetectionRadiusSize);
 
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
@@ -15,15 +13,25 @@ ADefaultActor::ADefaultActor()
 void ADefaultActor::BeginPlay()
 {
 	Super::BeginPlay();
-	StaticMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
-	DetectionRadius->SetSphereRadius(DetectionRadiusSize);
+
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		AMathProjectTPGameMode* GameMode = Cast<AMathProjectTPGameMode>(World->GetAuthGameMode());
+
+		if (GameMode)
+		{
+			GameMode->DefaultActorsArray.Add(this);
+		}
+	}
 }
 
 void ADefaultActor::Interpolate(float DeltaTime, bool ExitAtFullCharge)
 {
 	float InterpolationFactor = 0.5f + 0.5f * FMath::Sin(ChargeSpeed * GetWorld()->GetTimeSeconds());
 
-	float InterpolatedFloat = FMath::Lerp(0.0f, ChargeRange, InterpolationFactor);
+	float InterpolatedFloat = FMath::Lerp(0.25f, ChargeRange, InterpolationFactor);
 
 	FVector NewScale = FVector::OneVector * InterpolatedFloat;
 	SetActorScale3D(NewScale);
@@ -35,8 +43,8 @@ void ADefaultActor::Interpolate(float DeltaTime, bool ExitAtFullCharge)
 
 void ADefaultActor::AxisAlignedBoundingBox() 
 {
-	//AABBMin = GetActorLocation() - AABBHalfExtents;
-	//AABBMax = GetActorLocation() + AABBHalfExtents;
+	AABBMin = GetActorLocation() - AABBHalfExtents;
+	AABBMax = GetActorLocation() + AABBHalfExtents;
 
 	DrawDebugBox(GetWorld(), GetActorLocation(), AABBHalfExtents, FColor::Green, false, 0, 0, 5);
 }
@@ -131,7 +139,6 @@ void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
 	// Check the sign of the dot product to determine relative direction
 	if (DotProduct > 0)
 	{
-		// In front
 		FString DebugMessage = FString::Printf(TEXT("Actor In Front"));
 		float TimeToDisplay = 5.0f;
 		FColor DebugTextColor = FColor::Yellow;
@@ -172,19 +179,14 @@ void ADefaultActor::Tick(float DeltaTime)
 	TArray<AActor*> OverlappingActors;
 	GetOverlappingActors(OverlappingActors, ADefaultActor::StaticClass());
 
-	for (AActor* OverlappingActor : OverlappingActors)
+	AMathProjectTPGameMode* GameMode = GetWorld()->GetAuthGameMode<AMathProjectTPGameMode>();
+
+	if (GameMode)
 	{
-				FString DebugMessage = FString::Printf(TEXT("Actor Behind"));
-				float TimeToDisplay = 5.0f;
-				FColor DebugTextColor = FColor::Yellow;
-				GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
-		ADefaultActor* OtherActor = Cast<ADefaultActor>(OverlappingActor);
-		if (OtherActor)
+		for (ADefaultActor* OtherActor : GameMode->DefaultActorsArray)
 		{
-			// Check for AABB collision
 			if (CheckAABBCollision(OtherActor))
 			{
-				// Collision occurred, perform actions
 				HandleAABBCollision(OtherActor);
 			}
 		}

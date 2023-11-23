@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DefaultActor.h"
 #include "GameFramework/GameModeBase.h"
 #include "MathProjectTPGameMode.generated.h"
 
@@ -13,6 +14,9 @@ class AMathProjectTPGameMode : public AGameModeBase
 
 public:
 	AMathProjectTPGameMode();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameMode")
+	TArray<ADefaultActor*> DefaultActorsArray;
 };
 
 

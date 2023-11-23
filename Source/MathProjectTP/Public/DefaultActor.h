@@ -32,12 +32,6 @@ public:
 	ADefaultActor();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sphere", meta = (AllowPrivateAccess = "true"))
-	USphereComponent* DetectionRadius;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sphere", meta = (AllowPrivateAccess = "true"))
-	UStaticMeshComponent* Ball;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sphere", meta = (AllowPrivateAccess = "true"))
 	UMeshComponent* StaticMeshComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enums")
