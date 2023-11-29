@@ -1,4 +1,5 @@
 #include "DefaultActor.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "MathProjectTP/MathProjectTPGameMode.h"
 
 ADefaultActor::ADefaultActor()
@@ -9,6 +10,8 @@ ADefaultActor::ADefaultActor()
 	StaticMeshComponent->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 	RootComponent = StaticMeshComponent;
 }
+
+// Sets up the actors to recognize each other in the scene.
 
 void ADefaultActor::BeginPlay()
 {
@@ -27,6 +30,10 @@ void ADefaultActor::BeginPlay()
 	}
 }
 
+// INTERPOLATION //
+// Interpolates between the min and max value determined by ChargeRange. The float that is changed by this is later used to scale the actor in the scene.
+// This results in an actor that rapidly grows and shrinks when the interpolation state is triggered.
+
 void ADefaultActor::Interpolate(float DeltaTime, bool ExitAtFullCharge)
 {
 	float InterpolationFactor = 0.5f + 0.5f * FMath::Sin(ChargeSpeed * GetWorld()->GetTimeSeconds());
@@ -37,7 +44,7 @@ void ADefaultActor::Interpolate(float DeltaTime, bool ExitAtFullCharge)
 	SetActorScale3D(NewScale);
 
 	if (InterpolatedFloat == ChargeRange && ExitAtFullCharge) {
-		MovementState = MovementState::Default;
+		MovementState = ActionState::Default;
 	}
 }
 
@@ -46,7 +53,7 @@ void ADefaultActor::AxisAlignedBoundingBox()
 	AABBMin = GetActorLocation() - AABBHalfExtents;
 	AABBMax = GetActorLocation() + AABBHalfExtents;
 
-	DrawDebugBox(GetWorld(), GetActorLocation(), AABBHalfExtents, FColor::Green, false, 0, 0, 5);
+	DrawDebugBox(GetWorld(), GetActorLocation(), AABBHalfExtents, ActorColor, false, 0, 0, 5);
 }
 
 bool ADefaultActor::CheckAABBCollision(const ADefaultActor* OtherActor) const
@@ -68,17 +75,58 @@ bool ADefaultActor::CheckAABBCollision(const ADefaultActor* OtherActor) const
 
 void ADefaultActor::HandleAABBCollision(ADefaultActor* OtherActor)
 {
-		FString DebugMessage = FString::Printf(TEXT("Another Actor Found"));
-		float TimeToDisplay = 5.0f;
-		FColor DebugTextColor = FColor::Green;
-
-		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
-
 	if (CheckAABBCollision(OtherActor))
 	{
 		CheckDirection(OtherActor);
 	}
 }
+
+// INTERSECTION//
+
+// Checks the direction of the external actor. Once a collision happens, all actors will perform this check in relativity to their collided "partner".
+
+void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
+{
+	FVector DirectionToOtherActor = (OtherActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+	FVector ForwardVector = GetActorForwardVector().GetSafeNormal();
+
+	FVector CrossProduct = FVector::CrossProduct(DirectionToOtherActor, ForwardVector);
+	float DotProduct = FVector::DotProduct(DirectionToOtherActor, ForwardVector);
+
+	// Check the dot product to determine relative direction
+	if (DotProduct > 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Actor In Front"));
+		MovementState = ActionState::Interpolate;
+	}
+	else if (DotProduct < 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Actor Behind"));
+		MovementState = ActionState::Default;
+	}
+
+	if (CrossProduct.Z > 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Actor To The Right"));
+		if (PowerLevel < PowerMaxLimit) 
+		{
+			PowerLevel++;
+		}
+	}
+	else if (CrossProduct.Z < 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Actor To The Left"));
+		if (PowerLevel > PowerMinLimit)
+		{
+			PowerLevel--;
+		}
+	}
+}
+
+// COLLISION //
+// A ground check that utilizes a raycast (LineTrace) from the center point of the actor downwards. If the ray hits an object in the world, it is registered and the desired logic can be implemented.
+// This will collide with everything, but ideally setting up some form of tag system like "Ground" or "Environment" would help avoid unwanted behavior.
+// For example, assigning the "Environment" enum type to a default actor and only performing the TakeDamage() if the raycast hits a DefaultActor with the "Environment" enum type.
 
 void ADefaultActor::GroundCheck()
 {
@@ -106,15 +154,10 @@ void ADefaultActor::GroundCheck()
 			NewPosition = GetActorLocation();
 
 			float TotalLandingValue = LastKnownPosition.Z - NewPosition.Z;
-			FString DebugMessage = FString::Printf(TEXT("Total Landing Value: %.2f"), TotalLandingValue);
-			float TimeToDisplay = 5.0f;
-			FColor DebugTextColor = FColor::Green;
-
-			GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
 
 			if (TotalLandingValue > LandingThreshhold) 
 			{
-				// Take Damage
+				// Take damage, change color, bounce?
 				Falling = false;
 			}
 		}
@@ -127,49 +170,6 @@ void ADefaultActor::GroundCheck()
 	Grounded = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams);
 }
 
-void ADefaultActor::CheckDirection(ADefaultActor* OtherActor)
-{
-	FVector DirectionToOtherActor = (OtherActor->GetActorLocation() - GetActorLocation()).GetSafeNormal();
-	FVector ForwardVector = GetActorForwardVector();
-
-	FVector CrossProduct = FVector::CrossProduct(DirectionToOtherActor, ForwardVector);
-	// Check and compare both vector angles
-	float DotProduct = FVector::DotProduct(DirectionToOtherActor, ForwardVector);
-
-	// Check the sign of the dot product to determine relative direction
-	if (DotProduct > 0)
-	{
-		FString DebugMessage = FString::Printf(TEXT("Actor In Front"));
-		float TimeToDisplay = 5.0f;
-		FColor DebugTextColor = FColor::Yellow;
-		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
-	}
-	else if (DotProduct < 0)
-	{
-		// Behind
-		FString DebugMessage = FString::Printf(TEXT("Actor Behind"));
-		float TimeToDisplay = 5.0f;
-		FColor DebugTextColor = FColor::Yellow;
-		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
-	}
-
-	if (CrossProduct.Z > 0) 
-	{
-		// Right
-		FString DebugMessage = FString::Printf(TEXT("Actor To The Right"));
-		float TimeToDisplay = 5.0f;
-		FColor DebugTextColor = FColor::Yellow;
-		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
-	}
-	else if (CrossProduct.Z < 0) 
-	{
-		// Left
-		FString DebugMessage = FString::Printf(TEXT("Actor To The Left"));
-		float TimeToDisplay = 5.0f;
-		FColor DebugTextColor = FColor::Yellow;
-		GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
-	}
-}
 
 void ADefaultActor::Tick(float DeltaTime)
 {
@@ -180,6 +180,33 @@ void ADefaultActor::Tick(float DeltaTime)
 	GetOverlappingActors(OverlappingActors, ADefaultActor::StaticClass());
 
 	AMathProjectTPGameMode* GameMode = GetWorld()->GetAuthGameMode<AMathProjectTPGameMode>();
+
+	FString DebugMessage = FString::Printf(TEXT("PowerLevel: %.2f"), PowerLevel);
+	float TimeToDisplay = 5.0f;
+	FColor DebugTextColor = FColor::Green;
+
+	GEngine->AddOnScreenDebugMessage(-1, TimeToDisplay, DebugTextColor, DebugMessage);
+
+	if (PowerLevel > BossThreshhold) 
+	{
+		ActorType = ActorType::Boss;
+		ActorColor = FColor::Red;
+	}
+	else if (PowerLevel > DangerousThreshhold) 
+	{
+		ActorType = ActorType::Strong;
+		ActorColor = FColor::Orange;
+	}
+	else if (PowerLevel > AverageThreshhold)
+	{
+		ActorType = ActorType::Average;
+		ActorColor = FColor::Yellow;
+	}
+	else if (PowerLevel < AverageThreshhold) 
+	{
+		ActorType = ActorType::Weak;
+		ActorColor = FColor::Blue;
+	}
 
 	if (GameMode)
 	{
@@ -197,10 +224,10 @@ void ADefaultActor::Tick(float DeltaTime)
 	GroundCheck();
 
 	switch (MovementState) {
-	case MovementState::Interpolate:
+	case ActionState::Interpolate:
 		Interpolate(DeltaTime, true);
 		break;
-	case MovementState::Default:
+	case ActionState::Default:
 		break;
 	}
 

@@ -1,20 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 
 #include "Terrain.h"
 #include "ProceduralMeshComponent.h"
 
-// Sets default values
 ATerrain::ATerrain()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	ProceduralMesh = CreateDefaultSubobject<UProceduralMeshComponent>("Procedural Mesh");
 	ProceduralMesh->SetupAttachment(GetRootComponent());
 }
 
-// Called when the game starts or when spawned
 void ATerrain::BeginPlay()
 {
 	Super::BeginPlay();
@@ -27,11 +22,15 @@ void ATerrain::BeginPlay()
 	ProceduralMesh->CreateMeshSection(0, Vertices, Triangles, TArray<FVector>(), UV0, TArray<FColor>(), TArray<FProcMeshTangent>(), true);
 }
 
-// Called every frame
 void ATerrain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
+// NOISE //
+// A method that creates vertices in the world space, the position of which is determined by PerlinNoise2D which makes a "grid" of vertices that can later be drawn as a dynamic mesh
+// by drawing triangles between each point. In order to make the terrain generation random for each time the game is started, the noise scale has a randomly generated number attached to it.
+// The z float disturbed by the PerlinNoise is what eventually creates the variations on the z-axis on the grid.
 
 void ATerrain::CreateVertices() 
 {
@@ -45,6 +44,8 @@ void ATerrain::CreateVertices()
 		}
 	}
 }
+
+// Drawing the triangles between each vertex point. Forms a square which consists of two triangles, both of which have three vertex points each.
 
 void ATerrain::CreateTriangles() 
 {

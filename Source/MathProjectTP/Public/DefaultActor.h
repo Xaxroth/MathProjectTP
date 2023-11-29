@@ -7,21 +7,20 @@
 #include "DefaultActor.generated.h"
 
 UENUM(BlueprintType)
-enum class MovementState : uint8
+enum class ActionState : uint8
 {
 	Interpolate,
-	Curve,
+	ChangeColor,
 	Default
 };
 
 UENUM(BlueprintType)
 enum class ActorType : uint8
 {
-	Environment,
-	Enemy,
-	Friendly,
-	Player,
-	Projectile
+	Weak,
+	Average,
+	Strong,
+	Boss
 };
 
 UCLASS()
@@ -35,7 +34,7 @@ public:
 	UMeshComponent* StaticMeshComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enums")
-	TEnumAsByte<MovementState> MovementState;
+	TEnumAsByte<ActionState> MovementState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enums")
 	TEnumAsByte<ActorType> ActorType;
@@ -71,6 +70,8 @@ public:
 	FVector AABBMin;
 	FVector AABBMax;
 
+	FColor ActorColor;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ground Check")
 	float LandingThreshhold = 1000.0f;
 
@@ -85,6 +86,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Transform")
 	float ChargeSpeed;
+
+	float PowerLevel = 0.0f;
+	float PowerMinLimit = 0.0f;
+	float PowerMaxLimit = 10000.0f;
+
+	float WeakThreshhold = 1000.0f;
+	float AverageThreshhold = 3000.0f;
+	float DangerousThreshhold = 6000.0f;
+	float BossThreshhold = 9000.0f;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Transform")
 	float ChargeRange;
